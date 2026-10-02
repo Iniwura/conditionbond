@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+<rect width="1200" height="800" fill="#e9e5dc"/><rect y="610" width="1200" height="190" fill="#c2b7a5"/>
+<ellipse cx="600" cy="616" rx="250" ry="34" fill="#9d8e79" opacity=".35"/>
+<path d="M390 250 Q400 190 470 175 L730 175 Q800 190 810 250 L780 590 Q770 650 700 670 L500 670 Q430 650 420 590 Z" fill="#b64535" stroke="#63271f" stroke-width="18"/>
+<path d="M735 300 Q970 270 970 440 Q970 595 775 550" fill="none" stroke="#63271f" stroke-width="30"/>
+<path d="M735 315 Q930 300 930 435 Q930 550 780 525" fill="none" stroke="#e9e5dc" stroke-width="13"/>
+<path d="M570 202 L540 320 L590 388 L530 468 L565 575" fill="none" stroke="#211313" stroke-width="22"/>
+<path d="M570 202 L540 320 L590 388 L530 468 L565 575" fill="none" stroke="#f3d5cf" stroke-width="7"/>
+<path d="M456 248 L515 278 M618 394 L690 430" stroke="#211313" stroke-width="18"/>
+<text x="52" y="82" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#332d27">CONDITIONBOND / AFTER</text>
+<text x="52" y="124" font-family="Arial, sans-serif" font-size="22" fill="#554a40">Return evidence · same mug · obvious structural crack · asset CB-MUG-01</text>
+</svg>

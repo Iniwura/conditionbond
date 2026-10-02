@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+<rect width="1200" height="800" fill="#f1f0ec"/><rect x="85" y="180" width="1030" height="430" fill="#d9dee4" stroke="#8a949d" stroke-width="8" stroke-dasharray="20 18"/>
+<text x="600" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="55" font-weight="700" fill="#46515a">AMBIGUOUS RETURN</text>
+<text x="600" y="430" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" fill="#59636c">wrong asset / insufficient view</text>
+<text x="52" y="82" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#332d27">CONDITIONBOND / AFTER</text>
+<text x="52" y="124" font-family="Arial, sans-serif" font-size="22" fill="#554a40">Fail-closed fixture · no comparable item is visible · asset UNKNOWN</text>
+</svg>
