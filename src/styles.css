@@ -101,6 +101,7 @@ textarea.field, .field textarea { width: 100%; min-height: 88px; resize: vertica
 .verdict-panel.verdict-material_damage .verdict-symbol { background: #6b3030; }
 .verdict-panel.verdict-material_damage .eyebrow { color: #efaaaa; }
 .verdict-panel.verdict-material_damage p { color: #e4b2b2; }
+.verdict-panel.verdict-material_damage .button.dark { color: #f7dddd; border-color: #c77777; }
 .verdict-panel.verdict-undetermined { background: var(--amber-bg); color: #f3dec0; }
 .verdict-panel.verdict-undetermined .verdict-symbol { background: #73522b; }
 .verdict-panel.verdict-undetermined .eyebrow, .verdict-panel.verdict-undetermined p { color: #cda86d; }
