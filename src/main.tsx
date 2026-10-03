@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -32,6 +32,7 @@ import {
   X,
 } from 'lucide-react'
 import './styles.css'
+import { connectWallet, errorMessage, short, watchWallet, writeAndFinalize } from './genlayer'
 
 type Route = 'dashboard' | 'create' | 'bond' | 'review' | 'settlement' | 'audit'
 type Tone = 'neutral' | 'green' | 'amber' | 'red' | 'blue'
@@ -123,6 +124,10 @@ function App() {
   const [mobileNav, setMobileNav] = useState(false)
   const [toast, setToast] = useState('')
   const [copied, setCopied] = useState(false)
+  const [account, setAccount] = useState<string | null>(null)
+  const [liveBondId, setLiveBondId] = useState('CB-1042')
+  const [liveAmountWei, setLiveAmountWei] = useState(1850000000000000000n)
+
 
   const navigate = (next: Route) => {
     setRoute(next)
@@ -136,23 +141,32 @@ function App() {
     window.setTimeout(() => setToast(''), 2800)
   }
 
-  const createBond = (item: string, amount: string) => {
-    const next: Bond = {
-      id: 'CB-1043',
-      item: item || 'Vintage road bike',
-      category: 'New bond',
-      counterparty: 'Pending invite',
-      initials: 'PI',
-      amount: `${amount || '0.75'} GEN`,
-      status: 'Draft created',
-      statusTone: 'blue',
-      due: 'Awaiting invite',
-      image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85',
-    }
-    setBonds([next, ...bonds])
-    showToast('Bond draft created. Invite link copied to clipboard.')
-    navigate('bond')
+  useEffect(() => watchWallet((address) => setAccount(address), () => showToast('Wallet network changed')), [])
+
+  const createBond = async (item: string, amount: string, counterparty: string, beforeUrl: string) => {
+    if (!account) { showToast('Connect Rabby on Studio Dev before creating a bond.'); return }
+    if (!counterparty.startsWith('0x') || counterparty.length !== 42) { showToast('Enter a valid custodian wallet address.'); return }
+    const amountWei = BigInt(Math.round(Number(amount || '0.75') * 1e18))
+    const bondId = `CB-${Date.now().toString().slice(-6)}`
+    const before = beforeUrl || 'https://raw.githubusercontent.com/Iniwura/conditionbond/edd41a3/fixtures/multimodal/before-intact.svg'
+    const criteriaJson = JSON.stringify([{ criterion_id: 'identity', requirement: 'The same physical item is visible.' }, { criterion_id: 'surface', requirement: 'No new material damage beyond the frozen policy.' }])
+    const manifestJson = JSON.stringify([{ evidence_id: 'item-before', url: before, sha256: '' }])
+    try {
+      const result = await writeAndFinalize(account, 'create_bond', [bondId, counterparty, amountWei, manifestJson, criteriaJson, JSON.stringify({ rule: 'Minor scuffs that do not affect use.' }), JSON.stringify({ rule: 'New crack, break, missing piece, or unusable function.' }), 2500n, '2099-01-01T00:00:00Z'])
+      const next: Bond = { id: bondId, item: item || 'Condition-bound item', category: 'New bond', counterparty: short(counterparty), initials: short(counterparty, 2, 0).toUpperCase(), amount: `${amount || '0.75'} GEN`, status: 'Created · fund next', statusTone: 'blue', due: 'Awaiting funding', image: before }
+      setBonds([next, ...bonds]); setLiveBondId(bondId); setLiveAmountWei(amountWei); showToast(`Bond created · ${short(result.hash)}`); navigate('bond')
+    } catch (error) { showToast(errorMessage(error)) }
   }
+
+  const runWrite = async (functionName: string, args: any[], value = 0n, success = 'Transaction finalized') => {
+    if (!account) { showToast('Connect Rabby on Studio Dev first.'); return }
+    try { const result = await writeAndFinalize(account, functionName, args, value); showToast(`${success} · ${short(result.hash)}`) } catch (error) { showToast(errorMessage(error)) }
+  }
+  const fundBond = () => runWrite('fund_bond', [liveBondId], liveAmountWei, 'Bond funded')
+  const activateBond = () => runWrite('activate_bond', [liveBondId], 0n, 'Bond activated')
+  const submitReturn = () => runWrite('submit_return', [liveBondId, JSON.stringify([{ evidence_id: 'item-after', url: 'https://raw.githubusercontent.com/Iniwura/conditionbond/edd41a3/fixtures/multimodal/after-material-damage.svg', sha256: '' }])], 0n, 'Return evidence anchored')
+  const reviewBond = () => runWrite('review_bond', [liveBondId], 0n, 'GenLayer review finalized')
+  const settleBond = () => runWrite('settle_bond', [liveBondId], 0n, 'Settlement finalized')
 
   const copyId = () => {
     navigator.clipboard?.writeText('0x8b12…a9c4')
@@ -175,7 +189,7 @@ function App() {
         <div className="topbar-actions">
           <button className="network-pill"><span className="pulse-dot" /> Bradbury <ChevronDown size={13} /></button>
           <button className="icon-button notification" aria-label="Notifications"><Bell size={17} /><span /></button>
-          <button className="wallet-button" onClick={() => showToast('Wallet already connected')}><Wallet size={15} /> 0x8b12…a9c4</button>
+          <button className="wallet-button" onClick={async () => { try { const connected = await connectWallet(); setAccount(connected.address); showToast('Studio Dev wallet connected') } catch (error) { showToast(errorMessage(error)) } }}><Wallet size={15} /> {account ? short(account) : 'Connect wallet'}</button>
           <button className="mobile-menu" onClick={() => setMobileNav(!mobileNav)} aria-label="Open menu"><Menu size={19} /></button>
         </div>
       </header>
@@ -183,9 +197,9 @@ function App() {
       <main className="page-wrap">
         {route === 'dashboard' && <Dashboard bonds={bonds} navigate={navigate} />}
         {route === 'create' && <CreateBond onCancel={() => navigate('dashboard')} onCreate={createBond} />}
-        {route === 'bond' && <BondDetail navigate={navigate} showToast={showToast} copyId={copyId} copied={copied} />}
-        {route === 'review' && <Review navigate={navigate} showToast={showToast} />}
-        {route === 'settlement' && <Settlement navigate={navigate} />}
+        {route === 'bond' && <BondDetail navigate={navigate} showToast={showToast} copyId={copyId} copied={copied} onFund={fundBond} onActivate={activateBond} onSubmitReturn={submitReturn} onReview={reviewBond} />}
+        {route === 'review' && <Review navigate={navigate} showToast={showToast} onReview={reviewBond} />}
+        {route === 'settlement' && <Settlement navigate={navigate} onSettle={settleBond} />}
         {route === 'audit' && <Audit showToast={showToast} />}
       </main>
 
@@ -250,9 +264,11 @@ function Status({ tone, label }: { tone: Tone; label: string }) {
   return <span className={`status ${tone}`}>{iconForTone(tone)}{label}</span>
 }
 
-function CreateBond({ onCancel, onCreate }: { onCancel: () => void; onCreate: (item: string, amount: string) => void }) {
+function CreateBond({ onCancel, onCreate }: { onCancel: () => void; onCreate: (item: string, amount: string, counterparty: string, beforeUrl: string) => void }) {
   const [item, setItem] = useState('')
   const [amount, setAmount] = useState('')
+  const [counterparty, setCounterparty] = useState('')
+  const [beforeUrl, setBeforeUrl] = useState('')
   const [step, setStep] = useState(1)
   return <>
     <PageHeader eyebrow="Workspace / Create bond" title="Make the condition explicit." subtitle="Set the terms once. Let the evidence carry the rest." action={<span className="draft-state"><span className="status-dot" /> Saved locally</span>} />
@@ -260,7 +276,7 @@ function CreateBond({ onCancel, onCreate }: { onCancel: () => void; onCreate: (i
       <div className="stepper"><Step number="01" label="Item & people" active={step === 1} done={step > 1} /><Step number="02" label="Condition policy" active={step === 2} done={step > 2} /><Step number="03" label="Fund & invite" active={step === 3} done={false} /></div>
       <div className="create-main">
         {step === 1 && <div className="form-section"><FormIntro number="01" title="Item & people" detail="Start with what is moving and who is responsible for it." />
-          <div className="form-grid"><Field label="What are you bonding?" hint="A clear name helps both parties inspect the same item." value={item} onChange={setItem} placeholder="e.g. MacBook Pro 14-inch" /><Field label="Counterparty wallet or invite" hint="They will receive a secure link to accept the bond." placeholder="0x… or email address" /><Field label="Category" hint="Used to organize your audit trail." placeholder="Select a category" select /><Field label="Reference or serial number" hint="Optional. Never store sensitive personal data." placeholder="e.g. C02ZK1H0MD6M" /></div>
+          <div className="form-grid"><Field label="What are you bonding?" hint="A clear name helps both parties inspect the same item." value={item} onChange={setItem} placeholder="e.g. MacBook Pro 14-inch" /><Field label="Counterparty wallet" hint="The custodian must activate the funded bond." value={counterparty} onChange={setCounterparty} placeholder="0x…" /><Field label="Before evidence URL" hint="HTTPS image URL; it becomes immutable on-chain." value={beforeUrl} onChange={setBeforeUrl} placeholder="https://…" /><Field label="Category" hint="Used to organize your audit trail." placeholder="Select a category" select /><Field label="Reference or serial number" hint="Optional. Never store sensitive personal data." placeholder="e.g. C02ZK1H0MD6M" /></div>
           <div className="form-actions"><button className="button subtle" onClick={onCancel}>Cancel</button><button className="button primary" onClick={() => setStep(2)}>Continue <ChevronRight size={16} /></button></div>
         </div>}
         {step === 2 && <div className="form-section"><FormIntro number="02" title="Condition policy" detail="Give the inspection a shared, objective frame." />
@@ -269,7 +285,7 @@ function CreateBond({ onCancel, onCreate }: { onCancel: () => void; onCreate: (i
         </div>}
         {step === 3 && <div className="form-section"><FormIntro number="03" title="Fund & invite" detail="Secure the return before you share the inspection link." />
           <div className="fund-card"><div><span className="eyebrow">Bond amount</span><h3>How much should be held?</h3><p>Released automatically when the return matches the frozen policy.</p></div><div className="amount-input"><input autoFocus value={amount} onChange={(event) => setAmount(event.target.value.replace(/[^0-9.]/g, ''))} placeholder="0.00" /><span>GEN</span></div></div><div className="settlement-preview"><div><span className="eyebrow">Settlement policy</span><strong>Auto-release on match</strong></div><Status tone="green" label="Frozen after acceptance" /></div>
-          <div className="form-actions"><button className="button subtle" onClick={() => setStep(2)}>Back</button><button className="button primary" onClick={() => onCreate(item, amount)}>Create bond <ArrowUpRight size={16} /></button></div>
+          <div className="form-actions"><button className="button subtle" onClick={() => setStep(2)}>Back</button><button className="button primary" onClick={() => onCreate(item, amount, counterparty, beforeUrl)}>Create bond <ArrowUpRight size={16} /></button></div>
         </div>}
       </div>
       <aside className="create-aside"><div className="aside-label"><Sparkles size={14} /> How it works</div><div className="aside-flow"><FlowRow icon={<FileCheck2 size={16} />} title="Agree" detail="Both parties accept the same criteria." /><FlowRow icon={<Camera size={16} />} title="Inspect" detail="Evidence is captured at return." /><FlowRow icon={<Gavel size={16} />} title="Settle" detail="GenLayer validators compare the record." /></div><div className="aside-foot"><ShieldCheck size={15} /><span>Non-custodial. The policy is visible before funds move.</span></div></aside>
@@ -282,10 +298,10 @@ function FormIntro({ number, title, detail }: { number: string; title: string; d
 function Field({ label, hint, value, onChange, placeholder, select }: { label: string; hint: string; value?: string; onChange?: (value: string) => void; placeholder: string; select?: boolean }) { return <label className="field"><span>{label}</span>{select ? <select defaultValue=""><option value="" disabled>{placeholder}</option><option>Electronics</option><option>Furniture</option><option>Photography</option><option>Mobility</option></select> : <input value={value} onChange={(event) => onChange?.(event.target.value)} placeholder={placeholder} />}<small>{hint}</small></label> }
 function FlowRow({ icon, title, detail }: { icon: React.ReactNode; title: string; detail: string }) { return <div className="flow-row"><span className="flow-icon">{icon}</span><div><strong>{title}</strong><p>{detail}</p></div></div> }
 
-function BondDetail({ navigate, showToast, copyId, copied }: { navigate: (route: Route) => void; showToast: (message: string) => void; copyId: () => void; copied: boolean }) {
+function BondDetail({ navigate, showToast, copyId, copied, onFund, onActivate, onSubmitReturn, onReview }: { navigate: (route: Route) => void; showToast: (message: string) => void; copyId: () => void; copied: boolean; onFund: () => void; onActivate: () => void; onSubmitReturn: () => void; onReview: () => void }) {
   return <>
     <div className="detail-topline"><button className="back-button" onClick={() => navigate('dashboard')}>← Back to bonds</button><span className="detail-id"><span className="status-dot" /> CB-1042 <button onClick={copyId}>{copied ? <Check size={13} /> : <Copy size={13} />}</button></span></div>
-    <div className="detail-head"><div><div className="eyebrow">Active bond / Inspection due today</div><h1>MacBook Pro 14-inch</h1><div className="detail-meta"><span>Owned by you</span><span className="meta-divider" /><span>Counterparty: Mira Chen</span><span className="meta-divider" /><span>1.85 GEN secured</span></div></div><div className="detail-actions"><button className="button subtle" onClick={() => showToast('Share link copied')}><Link2 size={15} /> Share</button><button className="button primary" onClick={() => navigate('review')}>Review return <ArrowUpRight size={15} /></button></div></div>
+    <div className="detail-head"><div><div className="eyebrow">Active bond / Inspection due today</div><h1>MacBook Pro 14-inch</h1><div className="detail-meta"><span>Owned by you</span><span className="meta-divider" /><span>Counterparty: Mira Chen</span><span className="meta-divider" /><span>1.85 GEN secured</span></div></div><div className="detail-actions"><button className="button subtle" onClick={onFund}><Wallet size={15} /> Fund bond</button><button className="button subtle" onClick={onActivate}><ShieldCheck size={15} /> Activate</button><button className="button subtle" onClick={onSubmitReturn}><Camera size={15} /> Submit return</button><button className="button primary" onClick={() => { onReview(); navigate('review') }}>Review return <ArrowUpRight size={15} /></button></div></div>
     <div className="detail-grid">
       <div className="detail-content">
         <section className="evidence-section"><div className="section-heading compact"><div><span className="eyebrow">The evidence</span><h2>Before / after inspection</h2></div><span className="evidence-count"><Camera size={14} /> 8 files · hash verified</span></div><div className="evidence-compare"><EvidenceCard label="Before · Oct 02, 09:41" image={imageBefore} note="Intake evidence" /><div className="compare-line"><span>Compare</span><ArrowUpRight size={14} /></div><EvidenceCard label="After · Oct 06, 14:18" image={imageAfter} note="Return evidence" after /></div><div className="evidence-caption"><span><Fingerprint size={14} /> Evidence hashes are anchored to the bond contract.</span><button className="text-button">View provenance <ExternalLink size={13} /></button></div></section>
@@ -300,12 +316,12 @@ function BondDetail({ navigate, showToast, copyId, copied }: { navigate: (route:
 function EvidenceCard({ label, image, note, after }: { label: string; image: string; note: string; after?: boolean }) { return <div className="evidence-card"><div className="evidence-image"><img src={image} alt="Condition evidence" /><span className={`evidence-badge ${after ? 'after' : ''}`}>{after ? 'RETURN' : 'INTAKE'}</span><button className="image-expand" aria-label="Open evidence"><ExternalLink size={14} /></button></div><div className="evidence-card-foot"><span>{label}</span><span className="muted-small">{note}</span></div></div> }
 function LifeStep({ label, date, done, current }: { label: string; date: string; done?: boolean; current?: boolean }) { return <div className={`life-step ${done ? 'done' : ''} ${current ? 'current' : ''}`}><span className="life-dot">{done ? <Check size={11} /> : current ? <span /> : ''}</span><div><strong>{label}</strong><span>{date}</span></div></div> }
 
-function Review({ navigate, showToast }: { navigate: (route: Route) => void; showToast: (message: string) => void }) {
-  return <><PageHeader eyebrow="CB-1042 / Return review" title="Does the item match?" subtitle="Review the return against the criteria you both froze at intake." action={<Status tone="amber" label="Decision pending" />} /><div className="review-layout"><div className="review-main"><div className="review-compare"><EvidenceCard label="Intake · Oct 02" image={imageBefore} note="8 files" /><div className="review-arrow"><ArrowUpRight size={18} /></div><EvidenceCard label="Return · Oct 06" image={imageAfter} note="5 files" after /></div><div className="review-checklist"><div className="section-heading compact"><div><span className="eyebrow">Review checklist</span><h2>Confirm each criterion</h2></div><span className="muted-small">4 of 4 checked</span></div>{criteria.map((criterion, index) => <div className="review-row" key={criterion.label}><span className="review-check"><Check size={14} /></span><span className="review-row-index">0{index + 1}</span><div><strong>{criterion.label}</strong><p>{criterion.note}</p></div><button className="review-match">Matches <Check size={13} /></button></div>)}</div><div className="review-actions"><button className="button subtle" onClick={() => showToast('Issue flow opened — no dispute submitted')}>Raise an issue</button><button className="button primary" onClick={() => navigate('settlement')}>Confirm match <Check size={16} /></button></div></div><aside className="review-aside"><div className="side-card"><div className="side-card-head"><span className="eyebrow">Decision guardrails</span><CircleHelp size={15} /></div><p className="aside-copy">Confirming releases the secured amount to the owner. The decision and evidence hashes are permanently recorded.</p><div className="guardrail"><ShieldCheck size={15} /><span>Validators independently inspect the same evidence set.</span></div></div><div className="side-card"><div className="side-card-head"><span className="eyebrow">If something is wrong</span></div><p className="aside-copy">Raise an issue to pause settlement. You’ll be asked to highlight the specific criterion and add evidence.</p><button className="side-link" onClick={() => showToast('Issue flow opened — no dispute submitted')}>Start issue flow <ChevronRight size={14} /></button></div></aside></div></>
+function Review({ navigate, showToast, onReview }: { navigate: (route: Route) => void; showToast: (message: string) => void; onReview: () => void }) {
+  return <><PageHeader eyebrow="CB-1042 / Return review" title="Does the item match?" subtitle="Review the return against the criteria you both froze at intake." action={<Status tone="amber" label="Decision pending" />} /><div className="review-layout"><div className="review-main"><div className="review-compare"><EvidenceCard label="Intake · Oct 02" image={imageBefore} note="8 files" /><div className="review-arrow"><ArrowUpRight size={18} /></div><EvidenceCard label="Return · Oct 06" image={imageAfter} note="5 files" after /></div><div className="review-checklist"><div className="section-heading compact"><div><span className="eyebrow">Review checklist</span><h2>Confirm each criterion</h2></div><span className="muted-small">4 of 4 checked</span></div>{criteria.map((criterion, index) => <div className="review-row" key={criterion.label}><span className="review-check"><Check size={14} /></span><span className="review-row-index">0{index + 1}</span><div><strong>{criterion.label}</strong><p>{criterion.note}</p></div><button className="review-match">Matches <Check size={13} /></button></div>)}</div><div className="review-actions"><button className="button subtle" onClick={() => showToast('Issue flow opened — no dispute submitted')}>Raise an issue</button><button className="button primary" onClick={() => { onReview(); navigate('settlement') }}>Confirm match <Check size={16} /></button></div></div><aside className="review-aside"><div className="side-card"><div className="side-card-head"><span className="eyebrow">Decision guardrails</span><CircleHelp size={15} /></div><p className="aside-copy">Confirming releases the secured amount to the owner. The decision and evidence hashes are permanently recorded.</p><div className="guardrail"><ShieldCheck size={15} /><span>Validators independently inspect the same evidence set.</span></div></div><div className="side-card"><div className="side-card-head"><span className="eyebrow">If something is wrong</span></div><p className="aside-copy">Raise an issue to pause settlement. You’ll be asked to highlight the specific criterion and add evidence.</p><button className="side-link" onClick={() => showToast('Issue flow opened — no dispute submitted')}>Start issue flow <ChevronRight size={14} /></button></div></aside></div></>
 }
 
-function Settlement({ navigate }: { navigate: (route: Route) => void }) {
-  return <><div className="settlement-page"><div className="settlement-mark"><Check size={31} /></div><span className="eyebrow">CB-1042 / Settlement complete</span><h1>Condition confirmed.</h1><p className="settlement-lede">The return matched the frozen policy. 1.85 GEN is ready to release to the owner.</p><div className="settlement-receipt"><div><span className="eyebrow">Released amount</span><strong>1.85 GEN</strong></div><div><span className="eyebrow">Verdict</span><Status tone="green" label="Match confirmed" /></div><div><span className="eyebrow">Confirmation</span><button className="hash-link">0x8b12…a9c4 <ExternalLink size={12} /></button></div></div><div className="settlement-steps"><LifeStep label="Evidence compared" date="3 validators agreed" done /><LifeStep label="Policy evaluated" date="Accepted on Bradbury" done /><LifeStep label="Funds released" date="Transaction queued" current /></div><div className="settlement-actions"><button className="button subtle" onClick={() => navigate('audit')}>View audit trail</button><button className="button primary" onClick={() => navigate('dashboard')}>Back to overview <ArrowUpRight size={15} /></button></div></div></>
+function Settlement({ navigate, onSettle }: { navigate: (route: Route) => void; onSettle: () => void }) {
+  return <><div className="settlement-page"><div className="settlement-mark"><Check size={31} /></div><span className="eyebrow">CB-1042 / Settlement complete</span><h1>Condition confirmed.</h1><p className="settlement-lede">The return matched the frozen policy. 1.85 GEN is ready to release to the owner.</p><div className="settlement-receipt"><div><span className="eyebrow">Released amount</span><strong>1.85 GEN</strong></div><div><span className="eyebrow">Verdict</span><Status tone="green" label="Match confirmed" /></div><div><span className="eyebrow">Confirmation</span><button className="hash-link">0x8b12…a9c4 <ExternalLink size={12} /></button></div></div><div className="settlement-steps"><LifeStep label="Evidence compared" date="3 validators agreed" done /><LifeStep label="Policy evaluated" date="Accepted on Bradbury" done /><LifeStep label="Funds released" date="Transaction queued" current /></div><div className="settlement-actions"><button className="button subtle" onClick={() => navigate('audit')}>View audit trail</button><button className="button primary" onClick={() => { onSettle(); navigate('dashboard') }}>Settle bond <Check size={15} /></button><button className="button subtle" onClick={() => navigate('dashboard')}>Back to overview <ArrowUpRight size={15} /></button></div></div></>
 }
 
 function Audit({ showToast }: { showToast: (message: string) => void }) {

@@ -194,7 +194,10 @@ class ConditionBond(gl.contract.Contract):
                 observed=_decision(gl.nondet.exec_prompt(prompt,response_format="json",images=[before_image,after_image]))
             except Exception: observed={"verdict":UNDETERMINED,"reasoning":"Evidence could not be rendered or reviewed."}
             return observed["verdict"]==candidate["verdict"]
-        return gl.vm.run_nondet(leader,validator)
+        try:
+            return gl.vm.run_nondet(leader,validator)
+        except Exception:
+            return {"verdict":UNDETERMINED,"reasoning":"Validator consensus was unavailable."}
 
     @gl.public.write
     def review_bond(self,bond_id: str)->str:
@@ -215,7 +218,7 @@ class ConditionBond(gl.contract.Contract):
     @gl.public.write
     def expire_bond(self,bond_id: str)->str:
         bond=self._bond(bond_id); self._only_owner(bond)
-        if bond.status not in {DRAFT,FUNDED,ACTIVE,RETURN_SUBMITTED}: _error("bond cannot expire in its current state.")
+        if bond.status not in {FUNDED,ACTIVE,RETURN_SUBMITTED}: _error("bond cannot expire in its current state.")
         bond.status=EXPIRED; self.bonds[bond.bond_id]=bond; return _digest("CONDITIONBOND-EXPIRY-V1",[bond.bond_id,bond.policy_fingerprint])
 
     @gl.public.write

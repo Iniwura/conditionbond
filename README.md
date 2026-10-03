@@ -1,27 +1,31 @@
 # ConditionBond
 
-ConditionBond is a polished GenLayer proof-of-concept for physical-condition escrow. It turns the return inspection into a shared, inspectable record: intake evidence, return evidence, frozen criteria, validator verdict and settlement.
+ConditionBond is a GenLayer Studio Dev physical-condition escrow product. It freezes BEFORE evidence, return criteria, acceptable-wear policy, material-damage policy, and a funded GEN bond. The custodian submits AFTER evidence; GenLayer validators compare both images and agree on a bounded verdict. Settlement is deterministic; `UNDETERMINED` never settles.
 
-## Run the interface
+## Product routes
+
+- `/` dashboard and lifecycle overview
+- `/create` create and freeze a bond
+- `/bond` side-by-side BEFORE / AFTER evidence and controls
+- `/review` review criteria and verdict
+- `/settlement` deterministic receipt confirmation
+- `/audit` evidence provenance and transaction history
+
+## Run
 
 ```bash
 npm install
 npm run dev
+npm run build
 ```
 
-The app is a Vite + React single-page prototype with these flows:
+The frontend uses `genlayer-js` against Studio Dev chain `61997` and the deployed contract in `src/genlayer.ts`. Wallet actions require an injected EIP-1193 wallet on Studio Dev.
 
-- `/` overview and recent bonds
-- `/create` create bond wizard
-- `/bond` before/after evidence and bond detail
-- `/review` return review flow
-- `/settlement` settlement confirmation
-- `/audit` evidence and transaction audit stream
+## Contract verification
 
-The interface uses local demo data for the visual proof-of-concept. `contracts/condition_bond.py` contains the corresponding GenLayer contract boundary: funds are received through a payable write, policy/evidence references are frozen as data, and only a strict-equality validator verdict can release the secured GEN.
+```bash
+/home/ini/consentgate/.venv/bin/pytest -q tests/direct/test_condition_bond.py
+/home/ini/consentgate/.venv/bin/genvm-lint lint contracts/condition_bond.py
+```
 
-## Contract notes
-
-The contract intentionally follows the current GenLayer transfer pattern (`@gl.evm.contract_interface` + `emit_transfer`), uses `gl.eq_principle.strict_eq` for the money-moving verdict, uses `gl.vm.UserError` for user-facing failures, and normalizes addresses before party checks.
-
-Before a testnet deployment, wire the app’s write/read adapter to `genlayer-js`, set the deployed contract address in an environment file, and pass `transactionHashVariant: 'latest-nonfinal'` for post-write reads so the UI does not appear stale while the transaction finalizes.
+See `docs/LIVE_AUDIT.md` for the production contract, deployment transaction, source hash, multimodal probe, and live material-damage / fail-closed evidence. See `docs/THREAT_MODEL.md`, `docs/STATE_MACHINE.md`, `docs/INVARIANTS.md`, `docs/SCHEMA.md`, and `docs/ARCHITECTURE_REVIEW.md` for the protocol review.

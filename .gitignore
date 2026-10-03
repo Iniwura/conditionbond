@@ -1,5 +1,9 @@
-node_modules
-dist
+node_modules/
+dist/
+.vercel/
 .env
-.env.local
-.DS_Store
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
