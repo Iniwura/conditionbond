@@ -1,18 +1,20 @@
 # ConditionBond reviewer walkthrough
 
-ConditionBond is a physical-condition escrow product on GenLayer Studio Dev. The policy, evidence references, validator verdict, and deterministic settlement are inspectable in one flow.
+ConditionBond is a physical-condition escrow product on GenLayer Studio Dev. The deployed contract is the source of truth for the registry, evidence manifests, frozen policy, GenLayer verdict, receipts, and settlement state.
 
 ## Under two minutes
 
-1. Open the app at `/bond`. Inspect the side-by-side BEFORE / AFTER evidence comparison and the frozen policy panel.
-2. Open `/review`. The verdict surface shows criterion-by-criterion review and validator consensus.
-3. Open `/settlement`. Confirm the deterministic material-damage split: `0.25 GEN` to the owner and `0.75 GEN` to the custodian from a `1 GEN` bond.
-4. Open `/audit`. Verify the production Studio Dev contract, chain `61997`, source prefix, evidence events, and audit trail.
-5. The fail-closed production case is `CB-LIVE-UNDETERMINED-01`: `UNDETERMINED`, zero receipts, and `1 GEN` retained.
+1. Open the dashboard / and select the canonical live record CB-LIVE-MATERIAL-01 from the authoritative registry.
+2. Inspect /bonds/CB-LIVE-MATERIAL-01: the side-by-side BEFORE / AFTER evidence comparison is read from get_bond(), alongside the frozen policy and stored GenLayer verdict.
+3. Open /bonds/CB-LIVE-MATERIAL-01/settlement. Confirm the chain-derived 0.25 GEN owner receipt and 0.75 GEN custodian receipt from the 1 GEN material-damage record.
+4. Open the fail-closed production record at /bonds/CB-LIVE-UNDETERMINED-01/settlement: UNDETERMINED, zero receipts, and 1 GEN retained.
+5. Open /audit to verify the production contract, source SHA, live records, known hashes, and explicit unavailable-hash notes.
+
+No fixture record is inserted into the dashboard. If a canonical ID is absent from get_bond_ids(), the app shows that it is unavailable rather than synthesizing it.
 
 ## Links
 
 - GitHub: https://github.com/Iniwura/conditionbond
-- Production contract: `0x866e35788c8773e04A4A29B1fE490b81ca6B254c`
-- Final live audit: [`docs/LIVE_AUDIT_FINAL.md`](docs/LIVE_AUDIT_FINAL.md)
-- Submission details: [`SUBMISSION.md`](SUBMISSION.md)
+- Production contract: 0x866e35788c8773e04A4A29B1fE490b81ca6B254c
+- Final live audit: docs/LIVE_AUDIT_FINAL.md
+- Submission details: SUBMISSION.md

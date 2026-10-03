@@ -6,9 +6,9 @@ ConditionBond is a GenLayer Studio Dev physical-condition escrow product. It fre
 
 - `/` dashboard and lifecycle overview
 - `/create` create and freeze a bond
-- `/bond` side-by-side BEFORE / AFTER evidence and controls
-- `/review` review criteria and verdict
-- `/settlement` deterministic receipt confirmation
+- `/bonds/:bondId` side-by-side BEFORE / AFTER evidence and controls
+- `/bonds/:bondId/review` review criteria and verdict
+- `/bonds/:bondId/settlement` deterministic receipt confirmation
 - `/audit` evidence provenance and transaction history
 
 ## Run

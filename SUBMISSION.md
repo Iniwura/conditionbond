@@ -33,11 +33,11 @@ owner 0 + custodian 0
 ## Verification performed
 
 - Direct Mode: 18 substantive tests passed.
-- Frontend regression suite: 9 tests passed.
+- Frontend regression suite: 10 tests passed.
 - AST contract lint: passed.
 - Deployed schema: retrieved successfully.
 - TypeScript and production build: passed.
-- Required deep links: `/`, `/create`, `/bond`, `/review`, `/settlement`, `/audit` returned HTTP 200 in the local smoke test.
+- Required deep links: root, create, audit, /bonds/:bondId, /bonds/:bondId/review, and /bonds/:bondId/settlement returned HTTP 200 in the local smoke test.
 
 The bundled GenVM semantic/typecheck command remains limited by the missing cached SDK artifact `runners/py-genlayer/5j/ycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng.tar`; the contract was accepted at deployment and its deployed schema/code were verified afterward.
 
