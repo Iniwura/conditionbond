@@ -150,3 +150,111 @@ textarea.field, .field textarea { width: 100%; min-height: 88px; resize: vertica
   .settlement-option { align-items: flex-start; flex-direction: column; gap: 7px; }
   .settlement-option > span { text-align: left; white-space: normal; }
 }
+
+
+/* Public landing page */
+.brand-mark { width: 24px; height: 24px; border: 0; display: grid; place-items: center; transform: none; flex: none; }
+.brand-mark img { width: 24px; height: 24px; display: block; }
+.landing-page { min-height: 100vh; background: var(--bg); color: var(--white); }
+.landing-topbar { max-width: 1280px; margin: 0 auto; height: 76px; padding: 0 42px; display: flex; align-items: center; gap: 38px; border-bottom: 1px solid var(--rule); }
+.landing-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--white); font-size: 14px; font-weight: 600; text-decoration: none; letter-spacing: -.02em; }
+.landing-brand img { width: 24px; height: 24px; display: block; }
+.landing-nav { display: flex; align-items: center; gap: 26px; margin-left: auto; }
+.landing-nav a, .landing-footer a { color: var(--muted); text-decoration: none; font-size: 11px; }
+.landing-nav a:hover, .landing-footer a:hover { color: var(--white); }
+.landing-launch { margin-left: 2px; border: 1px solid var(--rule); color: var(--white); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; height: 36px; font-size: 11px; }
+.landing-launch:hover { border-color: #777; background: #171717; }
+.landing-hero { max-width: 1280px; margin: 0 auto; padding: 86px 42px 92px; display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); gap: 66px; align-items: center; }
+.landing-hero h1 { max-width: 600px; font-size: clamp(52px, 7vw, 88px); }
+.landing-lede { max-width: 460px; color: var(--muted); font-size: 16px; line-height: 1.55; margin-top: 22px; }
+.landing-hero-actions { display: flex; gap: 9px; margin-top: 31px; flex-wrap: wrap; }
+.landing-proof-meta { display: flex; flex-wrap: wrap; gap: 17px; margin-top: 32px; color: var(--muted); font: 10px 'DM Mono', monospace; }
+.landing-proof-meta > span:first-child { color: var(--green); display: inline-flex; align-items: center; gap: 7px; }
+.landing-visual { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 18px 0 20px; min-width: 0; }
+.landing-visual-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 17px; }
+.landing-compare { display: grid; grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr); gap: 12px; align-items: center; }
+.landing-evidence { min-width: 0; }
+.landing-evidence-frame { height: 270px; background: #171716; overflow: hidden; position: relative; border: 1px solid var(--rule); }
+.landing-evidence-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.landing-evidence-tag { position: absolute; top: 12px; left: 12px; background: #10100f; color: #d4d4ce; padding: 5px 7px; font: 9px 'DM Mono', monospace; letter-spacing: .06em; }
+.landing-evidence-tag.after { background: #d8e8db; color: #183021; }
+.landing-evidence-note { display: block; color: var(--muted); font-size: 10px; margin-top: 10px; }
+.landing-compare-center { display: flex; flex-direction: column; align-items: center; gap: 13px; color: var(--muted); text-align: center; font-size: 10px; line-height: 1.35; }
+.landing-compare-line { height: 32px; border-left: 1px solid var(--rule); }
+.landing-compare-arrow { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--rule); color: var(--soft); }
+.landing-visual-foot { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--rule); margin-top: 22px; padding-top: 15px; gap: 12px; }
+.landing-visual-foot span, .landing-contract-row span { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.landing-visual-foot small, .landing-contract-row small { color: var(--muted); font-size: 9px; }
+.landing-visual-foot strong { font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
+.landing-section { max-width: 1280px; margin: 0 auto; padding: 76px 42px; border-top: 1px solid var(--rule); }
+.landing-section-heading { display: flex; flex-direction: column; gap: 10px; max-width: 720px; margin-bottom: 34px; }
+.landing-section-heading h2 { font-size: clamp(28px, 4vw, 48px); line-height: 1.02; letter-spacing: -.05em; margin: 0; }
+.landing-section-heading p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.landing-step-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.landing-step { min-height: 170px; padding: 20px 22px 22px 0; border-right: 1px solid var(--rule); display: flex; flex-direction: column; justify-content: space-between; gap: 28px; }
+.landing-step + .landing-step { padding-left: 22px; }
+.landing-step:last-child { border-right: 0; }
+.landing-step > span { color: var(--muted); font: 10px 'DM Mono', monospace; }
+.landing-step strong { font-size: 13px; font-weight: 500; }
+.landing-step p { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 7px; max-width: 220px; }
+.landing-outcomes { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 60px; }
+.landing-outcome-list { border-top: 1px solid var(--rule); }
+.landing-outcome { min-height: 78px; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 14px; border-bottom: 1px solid var(--rule); }
+.landing-outcome-mark { width: 7px; height: 7px; background: var(--green); display: block; }
+.landing-outcome-mark.material_damage { background: var(--red); }
+.landing-outcome-mark.undetermined { background: var(--amber); }
+.landing-outcome strong { font-size: 12px; font-weight: 500; }
+.landing-outcome p { color: var(--muted); font-size: 10px; margin-top: 5px; }
+.landing-outcome-split { color: var(--soft); text-align: right; }
+.landing-live { padding-bottom: 60px; }
+.landing-read-state { border: 1px solid var(--rule); color: var(--muted); padding: 15px; font-size: 11px; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.landing-proof-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.landing-proof-card { min-width: 0; color: var(--white); text-decoration: none; border: 1px solid var(--rule); background: var(--panel); padding: 19px; display: block; }
+.landing-proof-card:hover { border-color: #666; background: #171717; }
+.landing-proof-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.landing-proof-id { display: block; margin-top: 20px; font: 500 12px 'DM Mono', monospace; overflow-wrap: anywhere; color: var(--soft); }
+.landing-proof-values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin: 17px 0 14px; padding: 13px 0; }
+.landing-proof-values span { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.landing-proof-values small { color: var(--muted); font-size: 9px; }
+.landing-proof-values strong { font-size: 11px; font-weight: 500; overflow-wrap: anywhere; }
+.landing-proof-link { display: flex; justify-content: space-between; align-items: center; color: var(--blue); font-size: 10px; }
+.landing-contract-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 18px; border-top: 1px solid var(--rule); margin-top: 22px; padding-top: 18px; }
+.landing-contract-row a { color: var(--blue); font: 10px 'DM Mono', monospace; overflow-wrap: anywhere; display: inline-flex; align-items: center; gap: 6px; }
+.landing-contract-row strong { color: var(--soft); font: 10px 'DM Mono', monospace; overflow-wrap: anywhere; }
+.landing-final-cta { max-width: 1280px; margin: 0 auto; padding: 88px 42px 106px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.landing-final-cta h2 { font-size: clamp(36px, 5vw, 64px); letter-spacing: -.06em; margin: 0; }
+.landing-footer { max-width: 1280px; margin: 0 auto; padding: 25px 42px 32px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.landing-footer nav { display: flex; gap: 22px; flex-wrap: wrap; justify-content: flex-end; }
+@media (max-width: 900px) {
+  .landing-hero { grid-template-columns: 1fr; gap: 48px; padding-top: 66px; }
+  .landing-outcomes { grid-template-columns: 1fr; gap: 35px; }
+  .landing-step-grid { grid-template-columns: repeat(2, 1fr); }
+  .landing-step:nth-child(2) { border-right: 0; }
+  .landing-step:nth-child(n + 3) { border-top: 1px solid var(--rule); }
+}
+@media (max-width: 720px) {
+  .landing-topbar { height: 64px; padding: 0 16px; gap: 14px; }
+  .landing-topbar .landing-nav { display: none; }
+  .landing-brand span { font-size: 13px; }
+  .landing-launch { margin-left: auto; padding: 0 9px; }
+  .landing-hero { padding: 52px 16px 64px; gap: 38px; }
+  .landing-hero h1 { font-size: 48px; }
+  .landing-lede { font-size: 14px; }
+  .landing-section { padding: 57px 16px; }
+  .landing-step-grid { grid-template-columns: 1fr; }
+  .landing-step, .landing-step + .landing-step { border-right: 0; padding: 18px 0; min-height: 0; gap: 20px; }
+  .landing-step + .landing-step { border-top: 1px solid var(--rule); }
+  .landing-compare { grid-template-columns: 1fr; gap: 18px; }
+  .landing-compare-center { flex-direction: row; justify-content: center; }
+  .landing-compare-line { width: 32px; height: 0; border-left: 0; border-top: 1px solid var(--rule); }
+  .landing-evidence-frame { height: 205px; }
+  .landing-outcome { grid-template-columns: 10px minmax(0, 1fr); padding: 15px 0; }
+  .landing-outcome-split { grid-column: 2; text-align: left; }
+  .landing-proof-grid { grid-template-columns: 1fr; }
+  .landing-proof-values { grid-template-columns: 1fr 1fr; }
+  .landing-proof-values span:last-child { grid-column: 1 / -1; }
+  .landing-contract-row { grid-template-columns: 1fr; }
+  .landing-final-cta { padding: 64px 16px 78px; }
+  .landing-footer { padding: 22px 16px 28px; align-items: flex-start; flex-direction: column; }
+  .landing-footer nav { justify-content: flex-start; gap: 14px 20px; }
+}

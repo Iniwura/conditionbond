@@ -66,6 +66,8 @@ const KNOWN_AUDIT_HASHES = [
   { label: 'UNDETERMINED bond creation', hash: '0xc86c67e9ec5ceee5b04c65b12866cd6386e19c770cf815fe18d332a992aaa098' },
 ]
 function explorerTxUrl(hash: string) { return EXPLORER_ROOT + '/tx/' + hash }
+const BEFORE_EVIDENCE_URL = new URL('../fixtures/multimodal/before-intact.svg', import.meta.url).href
+const AFTER_EVIDENCE_URL = new URL('../fixtures/multimodal/after-material-damage.svg', import.meta.url).href
 
 function iconForTone(tone: Tone) {
   if (tone === 'green') return <CheckCircle2 size={15} />
@@ -296,6 +298,10 @@ export function App() {
   const selectedId = route.kind === 'bond' || route.kind === 'review' || route.kind === 'settlement' ? route.bondId : null
   const selectedBond = selectedId ? records[selectedId] : undefined
 
+  if (route.kind === 'landing') {
+    return <Landing ids={bondIds} records={records} loading={loading} error={readError} />
+  }
+
   const content = route.kind === 'dashboard'
     ? <Dashboard ids={bondIds} records={records} balance={contractBalance} loading={loading} error={readError} navigate={navigate} />
     : route.kind === 'create'
@@ -312,7 +318,7 @@ export function App() {
     <div className="app-shell">
       <header className="topbar">
         <button className="brand" onClick={() => navigate({ kind: 'dashboard' })} aria-label="ConditionBond home">
-          <span className="brand-mark"><span /></span>
+          <span className="brand-mark"><img src="/conditionbond-mark.svg" alt="" /></span>
           <span>ConditionBond</span>
         </button>
         <nav className={'main-nav ' + (mobileNav ? 'is-open' : '')}>
@@ -362,6 +368,59 @@ function Metric({ label, value, detail, tone }: { label: string; value: string; 
 
 function Status({ tone, label }: { tone: Tone; label: string }) {
   return <span className={'status ' + tone}>{iconForTone(tone)}{label}</span>
+}
+
+function Landing({ ids, records, loading, error }: { ids: string[]; records: RecordMap; loading: boolean; error: string }) {
+  const material = records["CB-LIVE-MATERIAL-01"]
+  const undetermined = records["CB-LIVE-UNDETERMINED-01"]
+  const materialOwner = material ? formatGen(toBigInt(material.owner_receipt)) : loading ? "…" : "—"
+  const materialCustodian = material ? formatGen(toBigInt(material.custodian_receipt)) : loading ? "…" : "—"
+  const materialAmount = material ? formatGen(toBigInt(material.amount)) : loading ? "…" : "—"
+  const proofReady = Boolean(material || undetermined)
+  return <div className="landing-page">
+    <header className="landing-topbar">
+      <a className="landing-brand" href="/" aria-label="ConditionBond home"><img src="/conditionbond-mark.svg" alt="" /><span>ConditionBond</span></a>
+      <nav className="landing-nav" aria-label="Landing navigation"><a href="#product">Product</a><a href="#how-it-works">How it works</a><a href="#live-proof">Live proof</a></nav>
+      <a className="landing-launch" href="/app">Launch app <ArrowUpRight size={15} /></a>
+    </header>
+    <main>
+      <section className="landing-hero" id="product">
+        <div className="landing-hero-copy">
+          <span className="eyebrow">Condition / escrow / evidence</span>
+          <h1>Trust, with a paper trail.</h1>
+          <p className="landing-lede">Freeze the BEFORE state. GenLayer compares the return. The contract settles GEN deterministically.</p>
+          <div className="landing-hero-actions"><a className="button primary" href="/app">Launch app <ArrowUpRight size={16} /></a><a className="button subtle" href="#live-proof">See live proof <ChevronRight size={16} /></a></div>
+          <div className="landing-proof-meta"><span><span className="pulse-dot" /> Studio Dev</span><span>Contract-backed state</span><span>{ids.length ? ids.length + " live records" : loading ? "Reading live records" : "No records read"}</span></div>
+        </div>
+        <div className="landing-visual">
+          <div className="landing-visual-top"><span className="eyebrow">Controlled proof / CB-LIVE-MATERIAL-01</span><Status tone="red" label="MATERIAL DAMAGE" /></div>
+          <div className="landing-compare"><LandingEvidence label="BEFORE" image={BEFORE_EVIDENCE_URL} note="Frozen on create" /><div className="landing-compare-center"><span className="landing-compare-line" /><span className="landing-compare-arrow"><ArrowUpRight size={16} /></span><strong>GenLayer<br />comparison</strong><span className="landing-compare-line" /></div><LandingEvidence label="AFTER" image={AFTER_EVIDENCE_URL} note="Submitted return" after /></div>
+          <div className="landing-visual-foot"><span><small>Bond amount</small><strong>{materialAmount}</strong></span><span><small>Owner</small><strong>{materialOwner}</strong></span><span><small>Custodian</small><strong>{materialCustodian}</strong></span></div>
+        </div>
+      </section>
+      <section className="landing-section landing-steps" id="how-it-works"><div className="landing-section-heading"><span className="eyebrow">Protocol sequence</span><h2>One frozen condition. Four accountable steps.</h2></div><div className="landing-step-grid"><LandingStep number="01" title="Create" detail="Freeze parties, bond amount, policy, deadline and BEFORE evidence." /><LandingStep number="02" title="Fund" detail="Owner funds the exact frozen bond amount in GEN." /><LandingStep number="03" title="Inspect" detail="Custodian submits the AFTER condition evidence." /><LandingStep number="04" title="Review & settle" detail="GenLayer compares the two states. The contract settles the stored verdict deterministically." /></div></section>
+      <section className="landing-section landing-outcomes"><div className="landing-section-heading"><span className="eyebrow">Deterministic outcomes</span><h2>The model reads the condition. The contract decides the money.</h2><p>The model does not choose the payout amount.</p></div><div className="landing-outcome-list"><LandingOutcome verdict="UNCHANGED" detail="Custodian receives full bond." /><LandingOutcome verdict="ACCEPTABLE_WEAR" detail="Custodian receives full bond." /><LandingOutcome verdict="MATERIAL_DAMAGE" detail="Frozen damage BPS determines the owner share." split={material ? materialOwner + " owner · " + materialCustodian + " custodian" : undefined} /><LandingOutcome verdict="UNDETERMINED" detail="Settlement blocked · funds retained." /></div></section>
+      <section className="landing-section landing-live" id="live-proof">
+        <div className="landing-section-heading"><span className="eyebrow">Live proof</span><h2>Inspect the records that anchor the protocol.</h2><p>Read from the deployed contract on GenLayer Studio Dev. Missing history is never invented.</p></div>
+        {error && <div className="landing-read-state"><span className="status-dot" /> Live registry read unavailable: {error}</div>}{loading && <div className="landing-read-state"><span className="pulse-dot" /> Reading controlled proof records…</div>}{!loading && !proofReady && <div className="landing-read-state">Controlled proof records are not present in the current registry read.</div>}
+        <div className="landing-proof-grid">{material && <LandingProofCard bond={material} label="CONTROLLED STUDIO DEV PROOF · MATERIAL" />}{undetermined && <LandingProofCard bond={undetermined} label="CONTROLLED STUDIO DEV PROOF · FAIL-CLOSED" />}</div>
+        <div className="landing-contract-row"><span><small>Production contract</small><a href={EXPLORER_ROOT + "/address/" + CONTRACT_ADDRESS} target="_blank" rel="noreferrer">{short(CONTRACT_ADDRESS)} <ExternalLink size={12} /></a></span><span><small>Network</small><strong>Studio Dev · chain {CHAIN_ID}</strong></span><span><small>Source SHA</small><strong>{SOURCE_SHA256.slice(0, 12)}…</strong></span></div>
+      </section>
+      <section className="landing-final-cta"><span className="eyebrow">Start with the condition</span><h2>Make the condition explicit.</h2><a className="button primary" href="/app/create">Create a bond <ArrowUpRight size={16} /></a></section>
+    </main>
+    <footer className="landing-footer"><a className="landing-brand" href="/" aria-label="ConditionBond home"><img src="/conditionbond-mark.svg" alt="" /><span>ConditionBond</span></a><nav aria-label="Footer navigation"><a href="#product">Product</a><a href="#live-proof">Live proof</a><a href={EXPLORER_ROOT + "/address/" + CONTRACT_ADDRESS} target="_blank" rel="noreferrer">Contract</a><a href="https://github.com/Iniwura/conditionbond" target="_blank" rel="noreferrer">GitHub</a></nav></footer>
+  </div>
+}
+
+function LandingEvidence({ label, image, note, after }: { label: string; image: string; note: string; after?: boolean }) {
+  return <div className="landing-evidence"><div className="landing-evidence-frame"><img src={image} alt={label + " condition evidence"} /><span className={"landing-evidence-tag " + (after ? "after" : "")}>{label}</span></div><span className="landing-evidence-note">{note}</span></div>
+}
+function LandingStep({ number, title, detail }: { number: string; title: string; detail: string }) { return <div className="landing-step"><span>{number}</span><div><strong>{title}</strong><p>{detail}</p></div></div> }
+function LandingOutcome({ verdict, detail, split }: { verdict: string; detail: string; split?: string }) { return <div className={"landing-outcome"}><span className={"landing-outcome-mark " + verdict.toLowerCase()} /><div><strong>{verdict.replace(/_/g, " ")}</strong><p>{detail}</p></div>{split && <strong className="landing-outcome-split">{split}</strong>}</div> }
+function LandingProofCard({ bond, label }: { bond: ChainBond; label: string }) {
+  const verdict = normalizeVerdict(bond.verdict)
+  const undetermined = verdict === "UNDETERMINED" || bond.status === "UNDETERMINED"
+  return <a className="landing-proof-card" href={"/app/bonds/" + encodeURIComponent(bond.bond_id)}><div className="landing-proof-card-top"><span className="eyebrow">{label}</span><Status tone={verdictTone(verdict)} label={labelForVerdict(verdict)} /></div><strong className="landing-proof-id">{bond.bond_id}</strong><div className="landing-proof-values"><span><small>Condition</small><strong>{labelForVerdict(verdict)}</strong></span><span><small>State</small><strong>{undetermined ? "SETTLEMENT BLOCKED" : labelForStatus(String(bond.status))}</strong></span><span><small>Receipt</small><strong>{undetermined ? formatGen(toBigInt(bond.amount)) + " retained" : formatGen(toBigInt(bond.owner_receipt)) + " owner / " + formatGen(toBigInt(bond.custodian_receipt)) + " custodian"}</strong></span></div><span className="landing-proof-link">Open in app <ArrowUpRight size={14} /></span></a>
 }
 
 function Dashboard({ ids, records, balance, loading, error, navigate }: { ids: string[]; records: RecordMap; balance: bigint; loading: boolean; error: string; navigate: (route: Route) => void }) {

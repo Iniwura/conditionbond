@@ -111,7 +111,7 @@ afterEach(() => {
 
 describe('ConditionBond authoritative frontend', () => {
   it('renders the dashboard from get_bond_ids/get_bond and removes invented production records', async () => {
-    const view = renderRoute('/')
+    const view = renderRoute('/app')
     await waitFor(() => expect(screen.getByText('CB-LIVE-MATERIAL-01')).toBeInTheDocument())
     expect(screen.getByText('CB-LIVE-UNDETERMINED-01')).toBeInTheDocument()
     expect(screen.getAllByText('Jan 1, 2099 · controlled proof fixture')).toHaveLength(2)
@@ -127,6 +127,7 @@ describe('ConditionBond authoritative frontend', () => {
   it('supports dynamic bond, review, settlement, and audit routes', async () => {
     for (const [path, heading] of [
       ['/', 'Trust, with a paper trail.'],
+      ['/app', 'CB-LIVE-MATERIAL-01'],
       ['/create', 'Make the condition explicit.'],
       ['/bonds/CB-LIVE-MATERIAL-01', 'Red ceramic mug'],
       ['/bonds/CB-LIVE-MATERIAL-01/review', 'Does the item match?'],

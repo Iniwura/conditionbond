@@ -2,6 +2,7 @@ export const ROUTES = ['dashboard', 'create', 'audit'] as const
 export type StaticRoute = (typeof ROUTES)[number]
 
 export type Route =
+  | { kind: 'landing' }
   | { kind: 'dashboard' }
   | { kind: 'create' }
   | { kind: 'audit' }
@@ -134,20 +135,25 @@ export function canPerformBondAction(action: BondAction, viewer: string | null, 
 
 export function routeForPath(pathname: string): Route {
   const parts = pathname.split('/').filter(Boolean).map((part) => decodeURIComponent(part))
-  if (!parts.length) return { kind: 'dashboard' }
-  if (parts[0] === 'create') return { kind: 'create' }
-  if (parts[0] === 'audit') return { kind: 'audit' }
-  if (parts[0] === 'bonds' && parts[1]) {
-    if (parts[2] === 'review') return { kind: 'review', bondId: parts[1] }
-    if (parts[2] === 'settlement') return { kind: 'settlement', bondId: parts[1] }
-    return { kind: 'bond', bondId: parts[1] }
+  if (!parts.length) return { kind: 'landing' }
+  const appOffset = parts[0] === 'app' ? 1 : 0
+  if (appOffset && parts.length === 1) return { kind: 'dashboard' }
+  const section = parts[appOffset]
+  if (section === 'create') return { kind: 'create' }
+  if (section === 'audit') return { kind: 'audit' }
+  if (section === 'bonds' && parts[appOffset + 1]) {
+    const bondId = parts[appOffset + 1]
+    if (parts[appOffset + 2] === 'review') return { kind: 'review', bondId }
+    if (parts[appOffset + 2] === 'settlement') return { kind: 'settlement', bondId }
+    return { kind: 'bond', bondId }
   }
   return { kind: 'dashboard' }
 }
 
 export function pathForRoute(route: Route): string {
-  if (route.kind === 'dashboard') return '/'
-  if (route.kind === 'create') return '/create'
-  if (route.kind === 'audit') return '/audit'
-  return `/bonds/${encodeURIComponent(route.bondId)}${route.kind === 'bond' ? '' : `/${route.kind}`}`
+  if (route.kind === 'landing') return '/'
+  if (route.kind === 'dashboard') return '/app'
+  if (route.kind === 'create') return '/app/create'
+  if (route.kind === 'audit') return '/app/audit'
+  return `/app/bonds/${encodeURIComponent(route.bondId)}${route.kind === 'bond' ? '' : `/${route.kind}`}`
 }
