@@ -30,10 +30,17 @@ owner 0 + custodian 0
 1.00 GEN retained in the contract
 ```
 
+## Final polish verification
+
+- Evidence inspection uses full-frame contain rendering with no grayscale, contrast, or hover scaling.
+- Criterion rows remain neutral because the deployed contract stores only frozen criteria plus an overall verdict/reasoning result.
+- /audit exposes chain-derived controlled proof summaries and verified Studio Explorer transaction/address links; unavailable historical hashes remain explicitly unavailable.
+- The production source SHA remains unchanged after this frontend-only pass.
+
 ## Verification performed
 
 - Direct Mode: 18 substantive tests passed.
-- Frontend regression suite: 10 tests passed.
+- Frontend regression suite: 15 tests passed, including final-polish regressions for address truncation, UTC conversion, evidence semantics, verdict panels, controlled audit proof, criteria bounds, and settlement fingerprints.
 - AST contract lint: passed.
 - Deployed schema: retrieved successfully.
 - TypeScript and production build: passed.

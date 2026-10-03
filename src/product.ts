@@ -69,6 +69,7 @@ export function validateCreateBondInput(input: CreateBondInput): string | null {
   }
   const urlError = validateUrl(input.beforeUrl, 'Before evidence')
   if (urlError) return urlError
+  if (input.criteria.length > 8) return 'Use no more than 8 condition criteria.'
   if (!input.criteria.length || input.criteria.some((criterion) => !criterion.trim())) return 'Add at least one non-empty condition criterion.'
   if (!input.acceptableWear.trim()) return 'Define acceptable wear before freezing the policy.'
   if (!input.materialDamage.trim()) return 'Define material damage before freezing the policy.'
@@ -77,6 +78,18 @@ export function validateCreateBondInput(input: CreateBondInput): string | null {
   if (!input.deadline.trim()) return 'Set a UTC deadline before creating the bond.'
   if (Number.isNaN(Date.parse(input.deadline))) return 'Deadline must be a valid UTC date/time.'
   return null
+}
+
+export function utcDeadline(value: string): string {
+  const trimmed = value.trim()
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/.test(trimmed)) {
+    const localValue = trimmed.length === 16 ? trimmed + ':00' : trimmed
+    const date = new Date(localValue)
+    if (Number.isNaN(date.getTime())) throw new Error('Deadline must be a valid local date and time.')
+    return date.toISOString().replace(/\.\d{3}Z$/, 'Z')
+  }
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(trimmed)) return trimmed
+  throw new Error('Deadline must be a local datetime or canonical UTC timestamp.')
 }
 
 export function comparableEvidence(beforeUrl: string, afterUrl: string): boolean {

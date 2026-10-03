@@ -10,6 +10,7 @@ import {
   readBondIds,
   readContractBalance,
   writeAndFinalize,
+  short,
 } from './genlayer'
 import {
   canPerformBondAction,
@@ -18,6 +19,7 @@ import {
   routeForPath,
   settlementFor,
   validateCreateBondInput,
+  utcDeadline,
   type ChainBond,
 } from './product'
 
@@ -154,7 +156,7 @@ describe('ConditionBond authoritative frontend', () => {
     fireEvent.change(screen.getByLabelText('Item / asset description'), { target: { value: 'Custom field recorder' } })
     fireEvent.change(screen.getByLabelText('Custodian wallet'), { target: { value: CUSTODIAN } })
     fireEvent.change(screen.getByLabelText('BEFORE image URL'), { target: { value: 'https://cdn.example/custom-before.png' } })
-    fireEvent.change(screen.getByLabelText('Deadline (UTC)'), { target: { value: '2026-12-31T23:59' } })
+    fireEvent.change(screen.getByLabelText('Deadline'), { target: { value: '2026-12-31T23:59' } })
     fireEvent.click(screen.getByRole('button', { name: /continue/i }))
     fireEvent.change(screen.getByLabelText('Criterion 1'), { target: { value: 'Serial plate remains present' } })
     fireEvent.change(screen.getByLabelText('Acceptable wear definition'), { target: { value: 'Small cosmetic marks only' } })
@@ -177,7 +179,7 @@ describe('ConditionBond authoritative frontend', () => {
     expect(args[5]).toContain('Custom field recorder')
     expect(args[6]).toContain('Crack or missing component')
     expect(args[7]).toBe(3750n)
-    expect(args[8]).toBe('2026-12-31T23:59:00Z')
+    expect(args[8]).toBe(utcDeadline('2026-12-31T23:59'))
     view.unmount()
   })
 
@@ -251,14 +253,65 @@ describe('ConditionBond authoritative frontend', () => {
     expect(settlementFor('UNDETERMINED', WEI, 2500n)).toBeNull()
   })
 
+  it('handles short addresses with no right-hand slice and converts local deadlines to UTC', () => {
+    expect(short(CUSTODIAN, 2, 0)).toBe('0x…')
+    expect(short(CUSTODIAN, 2, 4)).toBe('0x…2222')
+    expect(utcDeadline('2026-12-31T23:59')).toBe(new Date('2026-12-31T23:59:00').toISOString().replace(/\.\d{3}Z$/, 'Z'))
+    expect(utcDeadline('2026-12-31T23:59:00Z')).toBe('2026-12-31T23:59:00Z')
+  })
+
+  it('renders chain-derived controlled proof cards and verified explorer links on audit', async () => {
+    const view = renderRoute('/audit')
+    await waitFor(() => expect(screen.getByText('CONTROLLED STUDIO DEV PROOF · MATERIAL')).toBeInTheDocument())
+    expect(screen.getByText(/0\.25 GEN owner/)).toBeInTheDocument()
+    expect(screen.getByText(/0\.75 GEN custodian/)).toBeInTheDocument()
+    expect(screen.getByText('CONTROLLED STUDIO DEV PROOF · FAIL-CLOSED')).toBeInTheDocument()
+    expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === 'https://explorer-studio.genlayer.com/tx/0x7ed51eee49ea1dbaebc49c5a7f0428b57f963105cdd25182b5d362e641e5e1db')).toBe(true)
+    view.unmount()
+  })
+
+  it('keeps criteria neutral and separates the stored overall verdict', async () => {
+    const view = renderRoute('/bonds/CB-LIVE-MATERIAL-01')
+    await waitFor(() => expect(screen.getByText('Evaluated by GenLayer')).toBeInTheDocument())
+    expect(screen.queryByText('Included in verdict')).not.toBeInTheDocument()
+    expect(view.container.querySelector('.verdict-material_damage')).toBeTruthy()
+    expect(screen.getByText('Stored on-chain')).toBeInTheDocument()
+    view.unmount()
+  })
+
+  it('caps create criteria at eight and previews the deterministic contract rule', async () => {
+    const view = renderRoute('/create')
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+    fireEvent.change(screen.getByLabelText('Criterion 1'), { target: { value: 'Criterion one' } })
+    const add = screen.getByRole('button', { name: /add criterion/i })
+    for (let index = 0; index < 7; index += 1) fireEvent.click(add)
+    expect(screen.getByLabelText('Criterion 8')).toBeInTheDocument()
+    expect(add).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Damage charge (BPS)'), { target: { value: '2500' } })
+    fireEvent.click(screen.getByRole('button', { name: /continue/i }))
+    fireEvent.change(screen.getByLabelText('Bond amount in GEN'), { target: { value: '1' } })
+    expect(screen.getByText('0.25 GEN owner / 0.75 GEN custodian')).toBeInTheDocument()
+    expect(screen.getByText('No settlement · principal retained')).toBeInTheDocument()
+    view.unmount()
+  })
+
+  it('shows the authoritative settlement fingerprint without inventing a transaction hash', async () => {
+    const view = renderRoute('/bonds/CB-LIVE-MATERIAL-01/settlement')
+    await waitFor(() => expect(screen.getByText('Settlement fingerprint')).toBeInTheDocument())
+    expect(screen.getByText('settlement-fingerprint')).toBeInTheDocument()
+    expect(screen.getByText(/no settlement transaction hash is inferred/i)).toBeInTheDocument()
+    view.unmount()
+  })
+
   it('shows production contract constants and only known audit hashes', async () => {
     const view = renderRoute('/audit')
     await waitFor(() => expect(screen.getByText('ConditionBond activity')).toBeInTheDocument())
     expect(screen.getByText(CONTRACT_ADDRESS.slice(0, 8) + '…' + CONTRACT_ADDRESS.slice(-6))).toBeInTheDocument()
     expect(screen.getByText('Studio Dev · chain ' + CHAIN_ID)).toBeInTheDocument()
     expect(screen.getByText('Source ' + SOURCE_SHA256)).toBeInTheDocument()
+    expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === 'https://explorer-studio.genlayer.com/address/' + CONTRACT_ADDRESS)).toBe(true)
     expect(screen.getByText('Production deployment')).toBeInTheDocument()
-    expect(screen.getByText(/lifecycle hashes.*not preserved/i)).toBeInTheDocument()
+    expect(screen.getByText(/Only the deployment and UNDETERMINED creation hashes were preserved/i)).toBeInTheDocument()
     view.unmount()
   })
 })

@@ -4,11 +4,11 @@ ConditionBond is a physical-condition escrow product on GenLayer Studio Dev. The
 
 ## Under two minutes
 
-1. Open the dashboard / and select the canonical live record CB-LIVE-MATERIAL-01 from the authoritative registry.
+1. Open the dashboard / and select the canonical CB-LIVE-MATERIAL-01 controlled Studio Dev proof from the authoritative registry.
 2. Inspect /bonds/CB-LIVE-MATERIAL-01: the side-by-side BEFORE / AFTER evidence comparison is read from get_bond(), alongside the frozen policy and stored GenLayer verdict.
 3. Open /bonds/CB-LIVE-MATERIAL-01/settlement. Confirm the chain-derived 0.25 GEN owner receipt and 0.75 GEN custodian receipt from the 1 GEN material-damage record.
 4. Open the fail-closed production record at /bonds/CB-LIVE-UNDETERMINED-01/settlement: UNDETERMINED, zero receipts, and 1 GEN retained.
-5. Open /audit to verify the production contract, source SHA, live records, known hashes, and explicit unavailable-hash notes.
+5. Open /audit to verify the two chain-derived controlled proof cards, production contract address page, source SHA, known transaction hashes, and explicit unavailable-hash notes.
 
 No fixture record is inserted into the dashboard. If a canonical ID is absent from get_bond_ids(), the app shows that it is unavailable rather than synthesizing it.
 

@@ -73,4 +73,9 @@ export async function writeAndFinalize(account: string, functionName: string, ar
   return { hash, estimate, decided, finalized }
 }
 export function formatGen(wei: bigint, decimals = 6) { const negative = wei < 0n; const value = negative ? -wei : wei; const base = 1000000000000000000n; const whole = value / base; const fraction = value % base; const fractionText = fraction.toString().padStart(18, '0').slice(0, decimals).replace(/0+$/, ''); return `${negative ? '-' : ''}${whole.toString()}${fractionText ? `.${fractionText}` : ''} GEN` }
-export function short(value: unknown, left = 8, right = 6) { const text = String(value || ''); return text.length > left + right + 1 ? `${text.slice(0,left)}…${text.slice(-right)}` : text || '—' }
+export function short(value: unknown, left = 8, right = 6) {
+  const text = String(value || '')
+  if (!text) return '—'
+  if (text.length <= left + (right > 0 ? right + 1 : 0)) return text
+  return right > 0 ? text.slice(0, left) + '…' + text.slice(-right) : text.slice(0, left) + '…'
+}
