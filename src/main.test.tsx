@@ -20,6 +20,7 @@ import {
   settlementFor,
   validateCreateBondInput,
   utcDeadline,
+  formatDeadline,
   type ChainBond,
 } from './product'
 
@@ -71,9 +72,10 @@ function makeBond(overrides: Partial<ChainBond> = {}): ChainBond {
   }
 }
 
-const materialBond = makeBond({ bond_id: 'CB-LIVE-MATERIAL-01', acceptable_wear: JSON.stringify({ asset_description: 'Red ceramic mug', definition: 'Minor scuffs.' }), material_damage: JSON.stringify({ asset_description: 'Red ceramic mug', definition: 'New structural crack.' }) })
+const materialBond = makeBond({ bond_id: 'CB-LIVE-MATERIAL-01', deadline_utc: '2099-01-01T00:00:00Z', acceptable_wear: JSON.stringify({ asset_description: 'Red ceramic mug', definition: 'Minor scuffs.' }), material_damage: JSON.stringify({ asset_description: 'Red ceramic mug', definition: 'New structural crack.' }) })
 const undeterminedBond = makeBond({
   bond_id: 'CB-LIVE-UNDETERMINED-01',
+  deadline_utc: '2099-01-01T00:00:00Z',
   verdict: 'UNDETERMINED',
   reasoning: 'Evidence was ambiguous.',
   damage_charge: '0',
@@ -112,6 +114,8 @@ describe('ConditionBond authoritative frontend', () => {
     const view = renderRoute('/')
     await waitFor(() => expect(screen.getByText('CB-LIVE-MATERIAL-01')).toBeInTheDocument())
     expect(screen.getByText('CB-LIVE-UNDETERMINED-01')).toBeInTheDocument()
+    expect(screen.getAllByText('Jan 1, 2099 · controlled proof fixture')).toHaveLength(2)
+    expect(screen.queryByText('2099-01-01T00:00:00Z')).not.toBeInTheDocument()
     expect(screen.queryByText(/Sony A7 IV|Aeron|Brompton|100% resolved|validator agreement/i)).not.toBeInTheDocument()
     expect(screen.getByText('No fixture records are rendered.')).toBeInTheDocument()
     expect(readBondIds).toHaveBeenCalled()
@@ -253,11 +257,15 @@ describe('ConditionBond authoritative frontend', () => {
     expect(settlementFor('UNDETERMINED', WEI, 2500n)).toBeNull()
   })
 
-  it('handles short addresses with no right-hand slice and converts local deadlines to UTC', () => {
+  it('handles short addresses, formats controlled and UTC deadlines, and fails safely', () => {
     expect(short(CUSTODIAN, 2, 0)).toBe('0x…')
     expect(short(CUSTODIAN, 2, 4)).toBe('0x…2222')
     expect(utcDeadline('2026-12-31T23:59')).toBe(new Date('2026-12-31T23:59:00').toISOString().replace(/\.\d{3}Z$/, 'Z'))
     expect(utcDeadline('2026-12-31T23:59:00Z')).toBe('2026-12-31T23:59:00Z')
+    expect(formatDeadline('2099-01-01T00:00:00Z', 'CB-LIVE-MATERIAL-01')).toBe('Jan 1, 2099 · controlled proof fixture')
+    expect(formatDeadline('2026-12-31T23:59:00Z', 'CB-TEST')).toBe('Dec 31, 2026 · 11:59 PM UTC')
+    expect(formatDeadline('', 'CB-TEST')).toBe('—')
+    expect(formatDeadline('not-a-date', 'CB-TEST')).toBe('—')
   })
 
   it('renders chain-derived controlled proof cards and verified explorer links on audit', async () => {

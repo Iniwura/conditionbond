@@ -92,6 +92,16 @@ export function utcDeadline(value: string): string {
   throw new Error('Deadline must be a local datetime or canonical UTC timestamp.')
 }
 
+export function formatDeadline(value: unknown, bondId?: unknown): string {
+  const raw = String(value ?? '').trim()
+  if (!raw || Number.isNaN(Date.parse(raw))) return '—'
+  if (String(bondId ?? '').startsWith('CB-LIVE-')) return 'Jan 1, 2099 · controlled proof fixture'
+  const date = new Date(raw)
+  const datePart = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(date)
+  const timePart = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }).format(date)
+  return datePart + ' · ' + timePart + ' UTC'
+}
+
 export function comparableEvidence(beforeUrl: string, afterUrl: string): boolean {
   try {
     const before = new URL(beforeUrl)

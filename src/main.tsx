@@ -42,6 +42,7 @@ import {
 import {
   canPerformBondAction,
   comparableEvidence,
+  formatDeadline,
   normalizeVerdict,
   pathForRoute,
   routeForPath,
@@ -393,12 +394,13 @@ function Dashboard({ ids, records, balance, loading, error, navigate }: { ids: s
           const bond = records[id]
           if (!bond) return null
           const before = beforeUrlFor(bond)
+          const rawDeadline = String(bond.deadline_utc || '').trim()
           return <div className="table-row" key={id} onClick={() => navigate({ kind: 'bond', bondId: id })}>
             <div className="item-cell"><img src={before} alt="" /><div><strong>{itemDescription(bond)}</strong><span>{id}</span></div></div>
             <div className="person-cell"><span className="avatar">{short(bond.custodian, 2, 0).toUpperCase()}</span><span>{short(bond.custodian)}</span></div>
             <strong className="amount-cell">{formatGen(toBigInt(bond.amount))}</strong>
             <Status tone={statusTone(String(bond.status))} label={labelForStatus(String(bond.status))} />
-            <span className="due-cell">{String(bond.deadline_utc || '—')}</span>
+            <span className="due-cell" title={rawDeadline ? 'On-chain UTC deadline: ' + rawDeadline : undefined}>{formatDeadline(rawDeadline, id)}</span>
             <button className="row-menu" aria-label={'Open ' + id}><ChevronRight size={16} /></button>
           </div>
         })}
@@ -495,6 +497,7 @@ function BondDetail({ bond, loading, error, account, navigate, copyValue, copied
   const beforeUrl = beforeUrlFor(bond)
   const storedAfterUrl = afterUrlFor(bond)
   const criteria = criteriaFor(bond)
+  const rawDeadline = String(bond.deadline_utc || '').trim()
   const reviewAllowed = canPerformBondAction('review', account, { status, owner: bond.owner, custodian: bond.custodian })
   const returnAllowed = canPerformBondAction('submit_return', account, { status, owner: bond.owner, custodian: bond.custodian })
   const fundAllowed = canPerformBondAction('fund', account, { status, owner: bond.owner, custodian: bond.custodian })
@@ -520,7 +523,7 @@ function BondDetail({ bond, loading, error, account, navigate, copyValue, copied
         <section className="findings-section"><div className="section-heading compact"><div><span className="eyebrow">Condition verdict</span><h2>Frozen criteria and stored result</h2></div>{bond.verdict ? <Status tone={verdictTone(verdict)} label={labelForVerdict(verdict)} /> : <Status tone="amber" label="Pending review" />}</div><div className="findings-list">{criteria.map((criterion, index) => <div className="finding" key={String(criterion.criterion_id || index)}><span className="finding-number">{String(index + 1).padStart(2, '0')}</span><div className="finding-main"><strong>{String(criterion.criterion_id || 'criterion')}</strong><p>{String(criterion.requirement || '')}</p></div><Status tone="neutral" label={bond.verdict ? 'Evaluated by GenLayer' : 'Frozen criterion'} /><ChevronRight size={15} className="finding-chevron" /></div>)}</div></section>
         <section className={'verdict-panel ' + (bond.verdict ? 'verdict-' + verdict.toLowerCase() : 'verdict-pending')}><div className="verdict-symbol">{verdict === 'UNDETERMINED' ? <Info size={20} /> : <Check size={20} />}</div><div><span className="eyebrow"><span className="stored-indicator"><span className="pulse-dot" /> Stored on-chain</span> · GenLayer result</span><h3>{bond.verdict ? labelForVerdict(verdict) : 'No verdict stored yet'}</h3><p>{bond.reasoning || (bond.verdict ? 'The deployed contract stored the verdict without reasoning.' : 'The owner must trigger review after return evidence is submitted.')}</p></div>{bond.verdict && verdict !== 'UNDETERMINED' && <button className="button dark" onClick={() => navigate({ kind: 'settlement', bondId: bond.bond_id })}>View settlement <ChevronRight size={15} /></button>}</section>
       </div>
-      <aside className="detail-aside"><div className="side-card lifecycle-card"><div className="side-card-head"><span className="eyebrow">Bond lifecycle</span><span className="tiny-live"><span className="pulse-dot" /> Chain state</span></div><div className="lifecycle"><LifeStep label="Bond created" date="revision 1" done /><LifeStep label="Funding / activation" date={['FUNDED', 'ACTIVE', 'RETURN_SUBMITTED', 'REVIEWED', 'SETTLED', 'UNDETERMINED'].includes(status) ? 'record advanced' : 'pending'} done={['FUNDED', 'ACTIVE', 'RETURN_SUBMITTED', 'REVIEWED', 'SETTLED', 'UNDETERMINED'].includes(status)} /><LifeStep label="Return submitted" date={storedAfterUrl ? 'AFTER anchored' : 'pending'} done={Boolean(storedAfterUrl)} /><LifeStep label="GenLayer review" date={bond.verdict ? labelForVerdict(verdict) : 'pending'} done={Boolean(bond.verdict)} current={!bond.verdict && status === 'RETURN_SUBMITTED'} /><LifeStep label="Settlement" date={status === 'UNDETERMINED' ? 'blocked' : status === 'SETTLED' ? 'complete' : 'pending'} done={status === 'SETTLED'} /></div></div><div className="side-card"><div className="side-card-head"><span className="eyebrow">Frozen policy</span><ShieldCheck size={15} /></div><div className="policy-lines"><div><span>Acceptable wear</span><strong>{policyDefinition(bond.acceptable_wear)}</strong></div><div><span>Material damage</span><strong>{policyDefinition(bond.material_damage)}</strong></div><div><span>Damage BPS</span><strong>{String(bond.damage_bps)}</strong></div><div><span>Deadline</span><strong>{String(bond.deadline_utc)}</strong></div></div><span className="muted-small">Policy fingerprint {short(bond.policy_fingerprint, 12, 8)}</span></div></aside>
+      <aside className="detail-aside"><div className="side-card lifecycle-card"><div className="side-card-head"><span className="eyebrow">Bond lifecycle</span><span className="tiny-live"><span className="pulse-dot" /> Chain state</span></div><div className="lifecycle"><LifeStep label="Bond created" date="revision 1" done /><LifeStep label="Funding / activation" date={['FUNDED', 'ACTIVE', 'RETURN_SUBMITTED', 'REVIEWED', 'SETTLED', 'UNDETERMINED'].includes(status) ? 'record advanced' : 'pending'} done={['FUNDED', 'ACTIVE', 'RETURN_SUBMITTED', 'REVIEWED', 'SETTLED', 'UNDETERMINED'].includes(status)} /><LifeStep label="Return submitted" date={storedAfterUrl ? 'AFTER anchored' : 'pending'} done={Boolean(storedAfterUrl)} /><LifeStep label="GenLayer review" date={bond.verdict ? labelForVerdict(verdict) : 'pending'} done={Boolean(bond.verdict)} current={!bond.verdict && status === 'RETURN_SUBMITTED'} /><LifeStep label="Settlement" date={status === 'UNDETERMINED' ? 'blocked' : status === 'SETTLED' ? 'complete' : 'pending'} done={status === 'SETTLED'} /></div></div><div className="side-card"><div className="side-card-head"><span className="eyebrow">Frozen policy</span><ShieldCheck size={15} /></div><div className="policy-lines"><div><span>Acceptable wear</span><strong>{policyDefinition(bond.acceptable_wear)}</strong></div><div><span>Material damage</span><strong>{policyDefinition(bond.material_damage)}</strong></div><div><span>Damage BPS</span><strong>{String(bond.damage_bps)}</strong></div><div><span>Deadline</span><strong title={rawDeadline ? 'On-chain UTC deadline: ' + rawDeadline : undefined}>{formatDeadline(rawDeadline, bond.bond_id)}</strong></div></div><span className="muted-small">Policy fingerprint {short(bond.policy_fingerprint, 12, 8)}</span></div></aside>
     </div>
   </>
 }
