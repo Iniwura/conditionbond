@@ -28,4 +28,4 @@ The frontend uses `genlayer-js` against Studio Dev chain `61997` and the deploye
 /home/ini/consentgate/.venv/bin/genvm-lint lint contracts/condition_bond.py
 ```
 
-See `docs/LIVE_AUDIT.md` for the production contract, deployment transaction, source hash, multimodal probe, and live material-damage / fail-closed evidence. See `docs/THREAT_MODEL.md`, `docs/STATE_MACHINE.md`, `docs/INVARIANTS.md`, `docs/SCHEMA.md`, and `docs/ARCHITECTURE_REVIEW.md` for the protocol review.
+See `docs/LIVE_AUDIT_FINAL.md` for the production contract, deployment transaction, source hash, multimodal probe, and live material-damage / fail-closed evidence. See `docs/THREAT_MODEL.md`, `docs/STATE_MACHINE.md`, `docs/INVARIANTS.md`, `docs/SCHEMA.md`, and `docs/ARCHITECTURE_REVIEW.md` for the protocol review.
